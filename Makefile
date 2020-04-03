@@ -3,9 +3,9 @@ ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY:
 bin/conmand:
-	go build -o $@ ${ROOT_DIR}/main.go
+	go build -ldflags '-w -extldflags "-static"' -o $@ ${ROOT_DIR}/main.go
 
-.PHONY:
+.PHONY: bin/conmanctl
 bin/conmanctl:
 	go build -o $@ ${ROOT_DIR}/ctl/main.go
 
@@ -21,6 +21,7 @@ testfunctional:
 testshimmy:
 	go test -v ./test/shimmy/
 
+.PHONY: test/data/rootfs_alpine
 test/data/rootfs_alpine:
 	$(eval CID=$(shell docker create -l com.iximiuz-project=${REPO} alpine))
 	mkdir -p ${ROOT_DIR}/test/data/rootfs_alpine/
@@ -54,3 +55,6 @@ clean-test-runs:
 	rm -f "${ROOT_DIR}/test/conman/conmand.log"
 	find /tmp -name conman-test-run.* -type d | xargs rm -rfv
 
+.PHONY: server
+server:
+	docker build -t conmand -f Dockerfile.server .

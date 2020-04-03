@@ -55,7 +55,7 @@ func listen(network, addr string) (net.Listener, error) {
 	if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	return net.Listen("unix", addr)
+	return net.Listen("tcp", addr)
 }
 
 func traceRequest(name string, req interface{}) {

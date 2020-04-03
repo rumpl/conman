@@ -1,0 +1,36 @@
+# syntax = docker/dockerfile:1.1-experimental
+
+# Buidler for golang
+FROM golang:1.13-alpine as builder
+RUN apk add -U make git gcc bash btrfs-progs-dev libseccomp-dev build-base iptables bind-tools
+
+# Builder for rust
+FROM jdrouet/rust-nightly:alpine3.10 as rust-builder
+RUN apk add -U git musl-dev
+
+# conman daemon build
+FROM builder as conmand
+ADD . /conman
+WORKDIR /conman
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    make bin/conmand
+
+# shimmy build
+FROM rust-builder as shimmy
+WORKDIR /
+RUN --mount=type=cache,target=/root/.cache/rust-build \
+    git clone https://github.com/iximiuz/shimmy.git && cd shimmy && cargo build --bin shimmy --release
+
+# runc build
+FROM builder as runc
+ADD script /
+WORKDIR /
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    ./install-runc
+
+# final build
+FROM golang:1.13-alpine as final
+COPY --from=conmand /conman/bin/conmand /bin/conmand
+COPY --from=shimmy /shimmy/target/release/shimmy /usr/local/bin/shimmy
+COPY --from=runc /usr/local/sbin/runc /usr/bin/runc
+ENTRYPOINT [ "/bin/conmand", "-l", ":6666" ]

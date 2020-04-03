@@ -17,7 +17,7 @@ func Print(v interface{}) {
 }
 
 func Connect() (server.ConmanClient, *grpc.ClientConn) {
-	conn, err := grpc.Dial("unix://"+OptHost, grpc.WithInsecure())
+	conn, err := grpc.Dial(OptHost, grpc.WithInsecure())
 	if err != nil {
 		logrus.Fatal(err)
 	}

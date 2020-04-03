@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+go get -d github.com/opencontainers/runc
+cd "$GOPATH"/src/github.com/opencontainers/runc
+git checkout $RUNC_COMMIT
+make BUILDTAGS='apparmor seccomp' runc install
